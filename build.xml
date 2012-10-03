@@ -1,0 +1,114 @@
+<?xml version="1.0" ?>
+<project name="android-json" default="compile" basedir=".">
+  <description>
+    This project builds a jar file for json support, using source
+    extracted from the main android system. This is primarily to
+    allow you to use json calls in tests that can run outside
+    the full android framework.
+
+    This particular version of the source was taken from the following
+    version of Android.
+
+    AndroidVersion.ApiLevel=16
+    Pkg.Revision=2
+    Pkg.SourceUrl=https://dl-ssl.google.com/android/repository/repository-7.xml
+
+    To regenerate the jar file, run ant clean dist.
+
+    NOTES:
+
+    1. The source builds with warnings related to missing
+    serialVersionUID in a couple of serializable classes.
+
+    2. One of the test cases does not pass. This appears to be a
+    low-priority bug in the original source code, and
+    http://source-android.frandroid.com/libcore/expectations/icebox.txt
+    describes it as:
+
+    description:
+    "a low-impact bug, also present in Crockford's implementation of org.json",
+    name:
+    "org.json.ParsingTest#test64BitHexValues",
+    substring:
+    "Large hex longs shouldn't be yield ints or strings..."
+
+  </description>
+
+  <property name="core.src" location="${basedir}/src/core"/>
+  <property name="test.src" location="${basedir}/src/test"/>
+  <property name="libs.dir" location="${basedir}/libs"/>
+  <property name="classes.dir" location="${basedir}/classes"/>
+  <property name="core.classes" location="${classes.dir}/core"/>
+  <property name="test.classes" location="${classes.dir}/test"/>
+  <property name="test.reports" location="${test.src}/reports"/>
+  <property name="dist.dir" location="${basedir}/dist"/>
+  <property name="java.source" value="1.5"/>
+  <property name="java.target" value="1.5"/>
+
+  <target name="init">
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${core.classes}"/>
+    <mkdir dir="${test.classes}"/>
+    <mkdir dir="${test.reports}"/>
+    <mkdir dir="${dist.dir}"/>
+  </target>
+
+  <target name="compile-core" depends="init">
+    <javac
+        srcdir="${core.src}"
+        destdir="${core.classes}"
+        debug="true"
+        source="${java.source}"
+        target="${java.target}"
+        includeantruntime="false">
+      <compilerarg value="-Xlint:all"/>
+    </javac>
+  </target>
+
+  <target name="compile-test" depends="compile-core">
+    <javac
+        srcdir="${test.src}"
+        destdir="${test.classes}"
+        debug="true"
+        source="${java.source}"
+        target="${java.target}"
+        includeantruntime="false">
+      <compilerarg value="-Xlint:all"/>
+      <classpath>
+        <pathelement location="${core.classes}"/>
+        <pathelement location="${libs.dir}/junit-4.10.jar"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile-test">
+    <junit printsummary="yes" haltonfailure="no">
+      <classpath>
+        <pathelement location="${core.classes}"/>
+        <pathelement location="${test.classes}"/>
+        <pathelement location="${libs.dir}/junit-4.10.jar"/>
+      </classpath>
+      <formatter type="plain"/>
+      <batchtest todir="${test.reports}">
+        <fileset dir="${test.src}">
+          <include name="**/*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="dist" depends="test">
+    <jar destfile="${dist.dir}/android-json.jar">
+      <fileset dir="${core.classes}"/>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete dir="${core.classes}"/>
+    <delete dir="${test.classes}"/>
+    <delete dir="${classes.dir}"/>
+    <delete dir="${dist.dir}"/>
+    <delete dir="${test.reports}"/>
+  </target>
+
+</project>
